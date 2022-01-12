@@ -1,0 +1,27 @@
+version: '3.7' 
+services: 
+  cura: 
+    image: mindcrime30/docker-cura:4.12.0 
+    environment: 
+      - PUID=1020
+      - PGID=1020
+      - TZ=America/New_York
+    networks:
+      - net
+    ports: 
+      - 5800:5800 
+    volumes: 
+      - /mnt/pool_alpha/vm_storage/cura/config:/config 
+      - /mnt/pool_alpha/shared:/storage 
+      - /mnt/pool_alpha/vm_storage/cura/output:/output
+    deploy:
+      labels:
+        - needs.something.to.deploy=true
+        # Cura is INTERNAL only
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+
+# This app is NOT supposed to be public

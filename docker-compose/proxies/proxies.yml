@@ -1,0 +1,46 @@
+---
+version: '3.7'
+services:
+  openvas:
+    image: nginx:latest
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /mnt/pool_alpha/vm_storage/proxies/openvas/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /mnt/pool_alpha/vm_storage/proxies/openvas/sites-enabled/openvas.mydomain.com.conf:/etc/nginx/sites-enabled/openvas.mydomain.com.conf
+      - /mnt/pool_alpha/vm_storage/proxies/openvas/sites-available/openvas.mydomain.com.conf:/etc/nginx/sites-available/openvas.mydomain.com.conf
+      - /mnt/pool_alpha/vm_storage/proxies/openvas/nginxconfig.io/general.conf:/etc/nginx/nginxconfig.io/general.conf
+      - /mnt/pool_alpha/vm_storage/proxies/openvas/nginxconfig.io/security.conf:/etc/nginx/nginxconfig.io/security.conf
+      - /mnt/pool_alpha/vm_storage/proxies/openvas/nginxconfig.io/proxy.conf:/etc/nginx/nginxconfig.io/proxy.conf
+      - /mnt/pool_alpha/vm_storage/proxies/server.crt:/etc/nginx/ssl/server.crt
+      - /mnt/pool_alpha/vm_storage/proxies/server.key:/etc/nginx/ssl/server.key
+      - /mnt/pool_alpha/vm_storage/proxies/dhparam.pem:/etc/nginx/dhparam.pem
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.openvas-proxy-http.rule=Host(`openvas.mydomain.com`)
+        - traefik.http.routers.openvas-proxy-http.entrypoints=http
+        - traefik.http.routers.openvas-proxy-http.middlewares=https-redirect
+        - traefik.http.routers.openvas-proxy-https.rule=Host(`openvas.mydomain.com`)
+        - traefik.http.routers.openvas-proxy-https.entrypoints=https
+        - traefik.http.routers.openvas-proxy-https.tls=true
+        - traefik.http.routers.openvas-proxy-https.tls.certresolver=le
+        - traefik.http.services.openvas-proxy.loadbalancer.server.port=80
+        - traefik.http.middlewares.openvas-auth.basicauth.users=brad:GENERATEAPASSWORD
+        - traefik.http.routers.openvas-proxy-https.middlewares=openvas-auth
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  traefik-public:
+    external: true
+
+    

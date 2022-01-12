@@ -1,0 +1,107 @@
+# Docker swarm
+# control the docker daemon, depending on your system:
+/etc/init.d/docker start
+/etc/init.d/docker stop
+/etc/init.d/docker restart
+
+service docker status
+service docker start
+service docker stop
+
+systemctl enable docker
+systemctl start docker
+systemctl stop docker
+
+# Swarm startup and joining
+docker swarm init --advertise-addr 10.80.248.45
+docker swarm join --token SWMTKN-1-23b6830kx2woerhg80eryu5g80y568tyv1f69m6r30i2rt-9845ryu6g08sh5g 192.168.0.123:2377
+docker swarm join-token worker # will give you the token again
+
+# Swarm list nodes
+docker node ls
+
+# Swarm take nodes in and out or service by node name
+docker node update --availability active worker1
+docker node update --availability drain worker1
+
+# Swarm but run single, no clustered ports etc.
+docker run --rm -ti --name=ctop --volume /var/run/docker.sock:/var/run/docker.sock:ro  quay.io/vektorlab/ctop:latest
+docker run -it -d -p 8080:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
+docker run hello-world
+
+# Swarm create new service (not using docker-compose.yml files)
+docker service create --name webserver -p 8080:80 nginx
+docker service create --name=viz --publish=8080:8080/tcp --constraint=node.role==manager --mount=type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock dockersamples/visualizer
+docker service create --replicas 1 --name helloworld alpine ping docker.com
+
+# Swarm examine service
+docker service inspect --pretty redis
+docker service ls
+docker service ps <SERVICE-ID> to see which nodes are running the service:
+docker service ps helloworld
+
+# Swarm remove a service
+docker service rm helloworld
+
+# Swarm scale a service up or down
+docker service scale helloworld=1
+docker service scale helloworld=5
+docker service scale kumastack_kuma=3
+docker service scale webserver=1
+docker service scale webserver=3
+
+# Swarm update a service to a different specified version
+docker service update --image redis:3.0.7 redis
+
+# Swarm deploy a stack from a docker compose file to be a clustered service with floating ports and all that
+docker stack deploy --compose-file docker-compose.yml kumastack
+
+# Swarm remove a stack
+docker stack rm kumastack_kuma
+
+# Swarm show info on a stack
+docker stack services kumastack
+
+# Swarm rebalance a service across nodes
+docker service update --force pirate_pirate_sonarr
+
+# Install docker:
+Debian:
+apt-get update
+apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common sudo vim
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+apt-get update
+apt-get install docker-ce docker-ce-cli
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker brad
+sudo newgrp docker
+sudo curl -L https://github.com/docker/compose/releases/download/1.18.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+# Add hosts to hosts file OR have working DNS
+ip addr
+sudo vim /etc/hosts
+# If you are going to clone the box for a worker node, stop here and clone it!
+sudo docker swarm init --advertise-addr 10.20.30.123
+# This gives you a URL for the worker nodes, run it on them.
+
+docker node ls
+docker service create --name webserver -p 8080:80 nginx
+# You should now be able to hit ANY node on port 8080 and get a response, it MAY take a few minutes, just chill.
+docker service scale webserver=3
+docker service scale webserver=1
+
+# Add your user to the docker group to reduce the sudo nonsense
+usermod -aG docker brad
+
+Alpine:
+apk update
+apk upgrade
+apk add docker docker-compose
+apk update
+rc-update add docker default
+/etc/init.d/docker start
+service docker status
+docker run hello-world
+

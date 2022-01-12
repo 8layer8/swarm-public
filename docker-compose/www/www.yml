@@ -1,0 +1,112 @@
+---
+version: '3.7'
+services:
+  wwwsite:
+    image: pavelsterba/static-site:latest
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /mnt/pool_alpha/vm_storage/public/www:/var/www
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.wwwsite-http.rule=Host(`www.mydomain.com`)
+        - traefik.http.routers.wwwsite-http.entrypoints=http
+        - traefik.http.routers.wwwsite-http.middlewares=https-redirect
+        - traefik.http.routers.wwwsite-https.rule=Host(`www.mydomain.com`)
+        - traefik.http.routers.wwwsite-https.entrypoints=https
+        - traefik.http.routers.wwwsite-https.tls=true
+        - traefik.http.routers.wwwsite-https.tls.certresolver=le
+        - traefik.http.services.wwwsite.loadbalancer.server.port=80
+
+  redsite:
+    image: pavelsterba/static-site:latest
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /mnt/pool_alpha/vm_storage/public/red:/var/www
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.redsite-http.rule=Host(`red.mydomain.com`)
+        - traefik.http.routers.redsite-http.entrypoints=http
+        - traefik.http.routers.redsite-http.middlewares=https-redirect
+        - traefik.http.routers.redsite-https.rule=Host(`red.mydomain.com`)
+        - traefik.http.routers.redsite-https.entrypoints=https
+        - traefik.http.routers.redsite-https.tls=true
+        - traefik.http.routers.redsite-https.tls.certresolver=le
+        - traefik.http.services.redsite.loadbalancer.server.port=80
+
+  bluesite:
+    image: pavelsterba/static-site:latest
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /mnt/pool_alpha/vm_storage/public/blue:/var/www
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.bluesite-http.rule=Host(`blue.mydomain.com`)
+        - traefik.http.routers.bluesite-http.entrypoints=http
+        - traefik.http.routers.bluesite-http.middlewares=https-redirect
+        - traefik.http.routers.bluesite-https.rule=Host(`blue.mydomain.com`)
+        - traefik.http.routers.bluesite-https.entrypoints=https
+        - traefik.http.routers.bluesite-https.tls=true
+        - traefik.http.routers.bluesite-https.tls.certresolver=le
+        - traefik.http.services.bluesite.loadbalancer.server.port=80
+
+  greensite:
+    image: pavelsterba/static-site:latest
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /mnt/pool_alpha/vm_storage/public/green:/var/www
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.greensite-http.rule=Host(`green.mydomain.com`)
+        - traefik.http.routers.greensite-http.entrypoints=http
+        - traefik.http.routers.greensite-http.middlewares=https-redirect
+        - traefik.http.routers.greensite-https.rule=Host(`green.mydomain.com`)
+        - traefik.http.routers.greensite-https.entrypoints=https
+        - traefik.http.routers.greensite-https.tls=true
+        - traefik.http.routers.greensite-https.tls.certresolver=le
+        - traefik.http.services.greensite.loadbalancer.server.port=80
+
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  traefik-public:
+    external: true
+
+    

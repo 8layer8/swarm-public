@@ -1,0 +1,14 @@
+traefik
+kuma
+swarmpit
+swarmprom
+audioserve
+pirate
+portainer
+homeserver
+www
+minio
+compression
+cura
+proxies
+

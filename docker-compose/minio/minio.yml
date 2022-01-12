@@ -1,0 +1,39 @@
+version: '3.7' 
+services: 
+  minio: 
+    image: quay.io/minio/minio:RELEASE.2021-12-10T23-03-39Z
+    command: server --console-address ":9001" /data1
+    environment: 
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=UseACrazyPasswordHere
+    networks:
+      - net
+      - traefik-public
+    volumes:
+      - /mnt/pool_alpha/s3:/data1
+
+# if your app doesn't show up in traefik, check this section first. First, that it says DEPLOY then match up the port
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.minio-http.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.minio-http.entrypoints=http
+        - traefik.http.routers.minio-http.middlewares=https-redirect
+        - traefik.http.routers.minio-https.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.minio-https.entrypoints=https
+        - traefik.http.routers.minio-https.tls=true
+        - traefik.http.routers.minio-https.tls.certresolver=le
+        - traefik.http.services.minio.loadbalancer.server.port=9001
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  traefik-public:
+    external: true
+

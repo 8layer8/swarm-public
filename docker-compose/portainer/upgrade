@@ -1,0 +1,2 @@
+docker service update --image cr.portainer.io/portainer/portainer-ce:2.9.3 --publish-add 9443:9443 --force portainer_portainer
+docker service update --image cr.portainer.io/portainer/agent:2.9.3 --force portainer_agent 

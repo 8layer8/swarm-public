@@ -1,0 +1,45 @@
+version: '3.7'
+services:
+  minio:
+    # image: quay.io/minio/minio:RELEASE.2021-12-10T23-03-39Z
+    # We are on ARM so its different:
+    image: tobi312/minio
+    command: server --console-address ":9001" /data1
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+      - MINIO_BROWSER_REDIRECT_URL=https://minio-console.remote.mydomain.com
+      - MINIO_SERVER_URL=https://s3.remote.mydomain.com
+      - MINIO_ROOT_USER=minioadmin321
+      - MINIO_ROOT_PASSWORD=lkjfhgkluahgukerhgkuj
+    networks:
+      - net
+      - traefik-public
+    expose:
+      - 9000
+      - 9001
+    volumes:
+      - /mnt/data/minio:/data1
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.http.services.minio.loadbalancer.server.port=9000
+        - traefik.http.routers.minio.rule=Host(`s3.remote.mydomain.com`)
+        - traefik.http.routers.minio.tls.certresolver=le
+        - traefik.http.routers.minio.entrypoints=https
+        - traefik.http.routers.minio.service=minio
+        - traefik.http.services.minio-console.loadbalancer.server.port=9001
+        - traefik.http.routers.minio-console.rule=Host(`minio-console.remote.mydomain.com`)
+        - traefik.http.routers.minio-console.tls.certresolver=le
+        - traefik.http.routers.minio-console.entrypoints=https
+        - traefik.http.routers.minio-console.service=minio-console
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  traefik-public:
+    external: true
