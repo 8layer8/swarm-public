@@ -1,0 +1,38 @@
+version: '3.7'
+
+services:
+  wetty:
+    # image: jlerma27/wetty # wetty for ARM6/Pi
+    image: wettyoss/wetty # wetty for x64
+    environment:
+      - VIRTUAL_HOST=${DOMAIN?Variable not set}
+      - VIRTUAL_PORT=3000
+      - REMOTE_SSH_SERVER=${REMOTESERVER?Variable not set}
+      - REMOTE_SSH_PORT=22
+      - REMOTE_SSH_USER=myusername
+      - TZ=America/New_York
+    networks:
+      - traefik-public
+      - net
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.wetty-http.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.wetty-http.entrypoints=http
+        - traefik.http.routers.wetty-http.middlewares=https-redirect
+        - traefik.http.routers.wetty-https.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.wetty-https.entrypoints=https
+        - traefik.http.routers.wetty-https.tls=true
+        - traefik.http.routers.wetty-https.tls.certresolver=le
+        - traefik.http.services.wetty.loadbalancer.server.port=3000
+        - traefik.http.middlewares.wetty-auth.basicauth.users=myusername:$$apr1$$vyr.UUVe$$iVBoh9834y787ywo4t
+        - traefik.http.routers.wetty-https.middlewares=wetty-auth
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  traefik-public:
+    external: true

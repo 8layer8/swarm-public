@@ -1,0 +1,40 @@
+version: '3.7' 
+
+services: 
+  audioserve: 
+    image: izderadicka/audioserve
+    environment: 
+      - PUID=1000
+      - PGID=1002
+      - TZ=America/New_York
+      - shared-secret=mysecret
+      - AUDIOSERVE_SHARED_SECRET=mysecret
+      - base_dirs=/audiobooks
+    command: --tags /audiobooks
+    networks:
+      - net
+      - traefik-public
+    volumes:
+      - /mnt/pool_alpha/audiobooks:/audiobooks
+      - /mnt/pool_alpha/vm_storage/audioserve/config:/home/audioserve/.audioserve
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.audioserve-http.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.audioserve-http.entrypoints=http
+        - traefik.http.routers.audioserve-http.middlewares=https-redirect
+        - traefik.http.routers.audioserve-https.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.audioserve-https.entrypoints=https
+        - traefik.http.routers.audioserve-https.tls=true
+        - traefik.http.routers.audioserve-https.tls.certresolver=le
+        - traefik.http.services.audioserve.loadbalancer.server.port=3000
+        
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  traefik-public:
+    external: true
+

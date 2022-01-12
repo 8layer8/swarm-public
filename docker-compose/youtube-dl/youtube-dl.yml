@@ -1,0 +1,37 @@
+version: '3.7'
+services:
+  youtube-dl:
+          image: modenaf360/youtube-dl-nas:latest
+    environment: 
+      - ALLOW_CONFIG_MUTATIONS=true
+      - UID=1020
+      - GID=1000
+      - MY_ID=er@email.com
+      - MY_PW=MyPassword
+      - TZ=America/New_York
+    volumes:
+      - /mnt/pool_alpha/vm_storage/youtube-dl/video:/downfolder
+      - /mnt/pool_alpha/vm_storage/youtube-dl/subscriptions:/app/subscriptions:rw
+      - /mnt/pool_alpha/vm_storage/youtube-dl/audio:/app/audio:rw
+      - /mnt/pool_alpha/vm_storage/youtube-dl/appdata:/app/appdata:rw
+      - /mnt/pool_alpha/vm_storage/youtube-dl/users:/app/users:rw
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.youtube-dl-http.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.youtube-dl-http.entrypoints=http
+        - traefik.http.routers.youtube-dl-http.middlewares=https-redirect
+        - traefik.http.routers.youtube-dl-https.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.youtube-dl-https.entrypoints=https
+        - traefik.http.routers.youtube-dl-https.tls=true
+        - traefik.http.routers.youtube-dl-https.tls.certresolver=le
+        - traefik.http.services.youtube-dl.loadbalancer.server.port=8080
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  traefik-public:
+    external: true

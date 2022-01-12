@@ -1,0 +1,219 @@
+---
+version: '3.7'
+services:
+  heimdall:
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+    image: lscr.io/linuxserver/heimdall
+    volumes:
+      - /mnt/pool_alpha/vm_storage/heimdall/config:/config
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.heimdall-http.rule=Host(`heimdall.mydomain.com`)
+        - traefik.http.routers.heimdall-http.entrypoints=http
+        - traefik.http.routers.heimdall-http.middlewares=https-redirect
+        - traefik.http.routers.heimdall-https.rule=Host(`heimdall.mydomain.com`)
+        - traefik.http.routers.heimdall-https.entrypoints=https
+        - traefik.http.routers.heimdall-https.tls=true
+        - traefik.http.routers.heimdall-https.tls.certresolver=le
+        - traefik.http.services.heimdall.loadbalancer.server.port=80
+
+  pyload:
+    image: writl/pyload:latest
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /mnt/pool_alpha/vm_storage/pyload/config:/opt/pyload/pyload-config
+      - /mnt/pool_alpha/vm_storage/pyload/downloads:/opt/pyload/Downloads
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.pyload-http.rule=Host(`pyload.mydomain.com`)
+        - traefik.http.routers.pyload-http.entrypoints=http
+        - traefik.http.routers.pyload-http.middlewares=https-redirect
+        - traefik.http.routers.pyload-https.rule=Host(`pyload.mydomain.com`)
+        - traefik.http.routers.pyload-https.entrypoints=https
+        - traefik.http.routers.pyload-https.tls=true
+        - traefik.http.routers.pyload-https.tls.certresolver=le
+        - traefik.http.services.pyload.loadbalancer.server.port=8000
+
+  speedtest:
+    image: openspeedtest/latest:latest
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.speedtest-http.rule=Host(`speedtest.mydomain.com`)
+        - traefik.http.routers.speedtest-http.entrypoints=http
+        - traefik.http.routers.speedtest-http.middlewares=https-redirect
+        - traefik.http.routers.speedtest-https.rule=Host(`speedtest.mydomain.com`)
+        - traefik.http.routers.speedtest-https.entrypoints=https
+        - traefik.http.routers.speedtest-https.tls=true
+        - traefik.http.routers.speedtest-https.tls.certresolver=le
+        - traefik.http.services.speedtest.loadbalancer.server.port=3000
+
+  deemix:
+    image: finniedj/deemix
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+      - ARL=GETYOUROWNARL
+    volumes:
+      - /mnt/pool_alpha/vm_storage/deemix/downloads:/downloads
+      - /mnt/pool_alpha/vm_storage/deemix/config:/config
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.deemix-http.rule=Host(`deemix.mydomain.com`)
+        - traefik.http.routers.deemix-http.entrypoints=http
+        - traefik.http.routers.deemix-http.middlewares=https-redirect
+        - traefik.http.routers.deemix-https.rule=Host(`deemix.mydomain.com`)
+        - traefik.http.routers.deemix-https.entrypoints=https
+        - traefik.http.routers.deemix-https.tls=true
+        - traefik.http.routers.deemix-https.tls.certresolver=le
+        - traefik.http.services.deemix.loadbalancer.server.port=6595
+
+  cyberchef:
+    image: mpepping/cyberchef:latest
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.cyberchef-http.rule=Host(`cyberchef.mydomain.com`)
+        - traefik.http.routers.cyberchef-http.entrypoints=http
+        - traefik.http.routers.cyberchef-http.middlewares=https-redirect
+        - traefik.http.routers.cyberchef-https.rule=Host(`cyberchef.mydomain.com`)
+        - traefik.http.routers.cyberchef-https.entrypoints=https
+        - traefik.http.routers.cyberchef-https.tls=true
+        - traefik.http.routers.cyberchef-https.tls.certresolver=le
+        - traefik.http.services.cyberchef.loadbalancer.server.port=8000
+
+  calibre:
+    image: ghcr.io/linuxserver/calibre:latest
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /mnt/pool_alpha/files/Books/Organized:/data
+      - /mnt/pool_alpha/vm_storage/calibre/config:/config
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.calibre-http.rule=Host(`calibre-admin.mydomain.com`)
+        - traefik.http.routers.calibre-http.entrypoints=http
+        - traefik.http.routers.calibre-http.middlewares=https-redirect
+        - traefik.http.routers.calibre-https.rule=Host(`calibre-admin.mydomain.com`)
+        - traefik.http.routers.calibre-https.entrypoints=https
+        - traefik.http.routers.calibre-https.tls=true
+        - traefik.http.routers.calibre-https.tls.certresolver=le
+        - traefik.http.services.calibre.loadbalancer.server.port=8080
+
+  calibre-web:
+    image: lscr.io/linuxserver/calibre-web
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+      - DOCKER_MODS=linuxserver/calibre-web:calibre #optional
+      - OAUTHLIB_RELAX_TOKEN_SCOPE=1 #optional
+    volumes:
+      - /mnt/pool_alpha/files/Books/Organized:/books
+      - /mnt/pool_alpha/vm_storage/calibre/config:/config
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.calibre-web-http.rule=Host(`calibre.mydomain.com`)
+        - traefik.http.routers.calibre-web-http.entrypoints=http
+        - traefik.http.routers.calibre-web-http.middlewares=https-redirect
+        - traefik.http.routers.calibre-web-https.rule=Host(`calibre.mydomain.com`)
+        - traefik.http.routers.calibre-web-https.entrypoints=https
+        - traefik.http.routers.calibre-web-https.tls=true
+        - traefik.http.routers.calibre-web-https.tls.certresolver=le
+        - traefik.http.services.calibre-web.loadbalancer.server.port=8083
+
+  staticsite:
+    image: nginx:latest
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /mnt/pool_alpha/vm_storage/public/configs/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /mnt/pool_alpha/vm_storage/public/configs/sites-enabled/static.mydomain.com.conf:/etc/nginx/sites-enabled/static.mydomain.com.conf
+      - /mnt/pool_alpha/vm_storage/public/configs/sites-available/static.mydomain.com.conf:/etc/nginx/sites-available/static.mydomain.com.conf
+      - /mnt/pool_alpha/vm_storage/public/configs/nginxconfig.io/general.conf:/etc/nginx/nginxconfig.io/general.conf
+      - /mnt/pool_alpha/vm_storage/public/configs/nginxconfig.io/security.conf:/etc/nginx/nginxconfig.io/security.conf
+      - /mnt/pool_alpha/vm_storage/public/static:/var/www
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.staticsite-http.rule=Host(`static.mydomain.com`)
+        - traefik.http.routers.staticsite-http.entrypoints=http
+        - traefik.http.routers.staticsite-http.middlewares=https-redirect
+        - traefik.http.routers.staticsite-https.rule=Host(`static.mydomain.com`)
+        - traefik.http.routers.staticsite-https.entrypoints=https
+        - traefik.http.routers.staticsite-https.tls=true
+        - traefik.http.routers.staticsite-https.tls.certresolver=le
+        - traefik.http.services.staticsite.loadbalancer.server.port=80
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  traefik-public:
+    external: true
+
+    

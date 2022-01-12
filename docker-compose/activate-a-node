@@ -1,0 +1,3 @@
+docker node update --availability active ${1}
+# docker node update --availability drain worker1
+

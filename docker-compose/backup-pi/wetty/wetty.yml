@@ -1,0 +1,31 @@
+version: '3.7'
+
+services:
+  wetty:
+    image: jlerma27/wetty
+    environment:
+      - VIRTUAL_HOST=wetty.remote.mydomain.com
+      - VIRTUAL_PORT=3000
+      - REMOTE_SSH_SERVER=192.168.0.1
+      - REMOTE_SSH_PORT=22
+      - REMOTE_SSH_USER=pi
+      - TZ=America/New_York
+    networks:
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.kuma-http.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.kuma-http.entrypoints=http
+        - traefik.http.routers.kuma-http.middlewares=https-redirect
+        - traefik.http.routers.kuma-https.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.kuma-https.entrypoints=https
+        - traefik.http.routers.kuma-https.tls=true
+        - traefik.http.routers.kuma-https.tls.certresolver=le
+        - traefik.http.services.kuma.loadbalancer.server.port=3000
+
+networks:
+  traefik-public:
+    external: true

@@ -1,0 +1,71 @@
+---
+version: '3.0'
+services:
+  handbrake:
+    image: jlesage/handbrake:latest
+    volumes:
+     - /mnt/pool_alpha/vm_storage/handbrake/config:/config
+     - /mnt/pool_alpha/vm_storage/handbrake/storage:/storage
+     - /mnt/pool_alpha/vm_storage/handbrake/watch:/watch
+     - /mnt/pool_alpha/vm_storage/handbrake/output:/output
+    environment:
+     - PUID=1020
+     - PGID=1000
+     - TZ=America/New_York
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.handbrake-http.rule=Host(`${DOMAIN1?Variable not set}`)
+        - traefik.http.routers.handbrake-http.entrypoints=http
+        - traefik.http.routers.handbrake-http.middlewares=https-redirect
+        - traefik.http.routers.handbrake-https.rule=Host(`${DOMAIN1?Variable not set}`)
+        - traefik.http.routers.handbrake-https.entrypoints=https
+        - traefik.http.routers.handbrake-https.tls=true
+        - traefik.http.routers.handbrake-https.tls.certresolver=le
+        - traefik.http.services.handbrake.loadbalancer.server.port=5800
+        - traefik.http.middlewares.handbrake-auth.basicauth.users=brad:GENERATEANEWPASSWORD
+        - traefik.http.routers.handbrake-https.middlewares=handbrake-auth
+
+  makemkv:
+    image: jlesage/makemkv:latest
+    volumes:
+     - /mnt/pool_alpha/vm_storage/makemkv/config:/config
+     - /mnt/pool_alpha/vm_storage/makemkv/storage:/storage
+     - /mnt/pool_alpha/vm_storage/makemkv/watch:/watch
+     - /mnt/pool_alpha/vm_storage/makemkv/output:/output
+    environment:
+     - PUID=1020
+     - PGID=1000
+     - TZ=America/New_York
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.makemkv-http.rule=Host(`${DOMAIN2?Variable not set}`)
+        - traefik.http.routers.makemkv-http.entrypoints=http
+        - traefik.http.routers.makemkv-http.middlewares=https-redirect
+        - traefik.http.routers.makemkv-https.rule=Host(`${DOMAIN2?Variable not set}`)
+        - traefik.http.routers.makemkv-https.entrypoints=https
+        - traefik.http.routers.makemkv-https.tls=true
+        - traefik.http.routers.makemkv-https.tls.certresolver=le
+        - traefik.http.services.makemkv.loadbalancer.server.port=5800
+        - traefik.http.middlewares.makemkv-auth.basicauth.users=brad:GENERATEANEWPASSWORD
+        - traefik.http.routers.makemkv-https.middlewares=makemkv-auth
+               
+networks:
+  net:
+    driver: overlay
+    # attachable: true
+  traefik-public:
+    external: true
+
+# These apps have usernames and passwords enforced here at the traefik layer

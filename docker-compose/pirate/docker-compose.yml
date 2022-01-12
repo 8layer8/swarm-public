@@ -1,0 +1,140 @@
+---
+version: '3.7'
+services:
+  pirate_radarr:
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+      - PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      - HOME=/root
+      - LANGUAGE=en_US.UTF-8
+      - LANG=en_US.UTF-8
+      - TERM=xterm
+      - XDG_CONFIG_HOME=/config/xdg
+    image: ghcr.io/linuxserver/radarr
+    volumes:
+      - /mnt/pool_alpha/vm_storage/radarr/config:/config
+      - /mnt/pool_alpha/vm_storage/radarr/movies:/movies
+      - /mnt/pool_alpha/vm_storage/radarr/downloads:/downloads
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.radarr-http.rule=Host(`radarr.mydomain.com`)
+        - traefik.http.routers.radarr-http.entrypoints=http
+        - traefik.http.routers.radarr-http.middlewares=https-redirect
+        - traefik.http.routers.radarr-https.rule=Host(`radarr.mydomain.com`)
+        - traefik.http.routers.radarr-https.entrypoints=https
+        - traefik.http.routers.radarr-https.tls=true
+        - traefik.http.routers.radarr-https.tls.certresolver=le
+        - traefik.http.services.radarr.loadbalancer.server.port=7878
+
+  pirate_sabnzbd:
+    command:
+      - /sabnzbd.sh
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+      - PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      - LANG=C.UTF-8
+    image: sabnzbd/sabnzbd
+    volumes:
+      - /mnt/pool_alpha/vm_storage/sabnzbd/datadir:/datadir
+      - /mnt/pool_alpha/vm_storage/sabnzbd/media:/media
+    networks:
+      - net
+      - traefik-public
+    working_dir: /sabnzbd
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.sabnzbd-http.rule=Host(`sabnzbd.mydomain.com`)
+        - traefik.http.routers.sabnzbd-http.entrypoints=http
+        - traefik.http.routers.sabnzbd-http.middlewares=https-redirect
+        - traefik.http.routers.sabnzbd-https.rule=Host(`sabnzbd.mydomain.com`)
+        - traefik.http.routers.sabnzbd-https.entrypoints=https
+        - traefik.http.routers.sabnzbd-https.tls=true
+        - traefik.http.routers.sabnzbd-https.tls.certresolver=le
+        - traefik.http.services.sabnzbd.loadbalancer.server.port=8080
+
+
+  pirate_sonarr:
+    entrypoint:
+      - /init
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+      - PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      - HOME=/root
+      - LANGUAGE=en_US.UTF-8
+      - LANG=en_US.UTF-8
+      - TERM=xterm
+      - XDG_CONFIG_HOME=/config/xdg
+      - SONARR_BRANCH=master
+    image: ghcr.io/linuxserver/sonarr
+    volumes:
+      - /mnt/pool_alpha/vm_storage/sonarr/config:/config
+      - /mnt/pool_alpha/vm_storage/sonarr/tv:/tv
+      - /mnt/pool_alpha/vm_storage/sonarr/downloads:/downloads
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.sonarr-http.rule=Host(`sonarr.mydomain.com`)
+        - traefik.http.routers.sonarr-http.entrypoints=http
+        - traefik.http.routers.sonarr-http.middlewares=https-redirect
+        - traefik.http.routers.sonarr-https.rule=Host(`sonarr.mydomain.com`)
+        - traefik.http.routers.sonarr-https.entrypoints=https
+        - traefik.http.routers.sonarr-https.tls=true
+        - traefik.http.routers.sonarr-https.tls.certresolver=le
+        - traefik.http.services.sonarr.loadbalancer.server.port=8989
+
+
+  nzbhydra2:
+    container_name: nzbhydra2
+    image: hotio/nzbhydra2
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - UMASK=002
+      - TZ=America/New_York
+    volumes:
+      - /mnt/pool_alpha/vm_storage/nzbhydra2/config:/config
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.nzbhydra2-http.rule=Host(`nzbhydra2.mydomain.com`)
+        - traefik.http.routers.nzbhydra2-http.entrypoints=http
+        - traefik.http.routers.nzbhydra2-http.middlewares=https-redirect
+        - traefik.http.routers.nzbhydra2-https.rule=Host(`nzbhydra2.mydomain.com`)
+        - traefik.http.routers.nzbhydra2-https.entrypoints=https
+        - traefik.http.routers.nzbhydra2-https.tls=true
+        - traefik.http.routers.nzbhydra2-https.tls.certresolver=le
+        - traefik.http.services.nzbhydra2.loadbalancer.server.port=5076
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  traefik-public:
+    external: true
+
+    
