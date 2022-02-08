@@ -2,9 +2,8 @@ version: '3.7'
 services:
   db:
     image: mariadb:10.5
-    container_name: seafile-mysql
     environment:
-      - MYSQL_ROOT_PASSWORD=lxkdgfnbljkdhb  # Requested, set the root's password of MySQL service.
+      - MYSQL_ROOT_PASSWORD=123412341234  # Requested, set the root's password of MySQL service.
       - MYSQL_LOG_CONSOLE=true
       - PUID=1020
       - PGID=1000
@@ -21,7 +20,6 @@ services:
 
   memcached:
     image: memcached:1.5.6
-    container_name: seafile-memcached
     entrypoint: memcached -m 256
     networks:
       - net
@@ -33,7 +31,6 @@ services:
 
   elasticsearch:
     image: elasticsearch:7.16.2
-    container_name: seafile-elasticsearch
     environment:
       - discovery.type=single-node
       - bootstrap.memory_lock=true
@@ -58,20 +55,16 @@ services:
           
   seafile:
     image: docker.seafile.top/seafileltd/seafile-pro-mc:latest
-    container_name: seafile
-#  ports:
-#      - "80:80"
-#     - "443:443"  # If https is enabled, cancel the comment.
     volumes:
       - /mnt/pool_alpha/vm_storage/seafile/data:/shared   # Requested, specifies the path to Seafile data persistent store.
     environment:
       - DB_HOST=db
-      - DB_ROOT_PASSWD=pasteinfromabove  # Requested, the value shuold be root's password of MySQL service.
+      - DB_ROOT_PASSWD=123412341234  # Requested, the value shuold be root's password of MySQL service.
       - TIME_ZONE=America/New_York # Optional, default is UTC. Should be uncomment and set to your local time zone.
-      - SEAFILE_ADMIN_EMAIL=seafile@mydomain.com # Specifies Seafile admin user, default is 'me@example.com'
-      - SEAFILE_ADMIN_PASSWORD=crazypoassword     # Specifies Seafile admin password, default is 'asecret'
+      - SEAFILE_ADMIN_EMAIL=seafile@domain.com # Specifies Seafile admin user, default is 'me@example.com'
+      - SEAFILE_ADMIN_PASSWORD=CrazyPassword     # Specifies Seafile admin password, default is 'asecret'
       - SEAFILE_SERVER_LETSENCRYPT=false   # Whether to use https or not
-      - SEAFILE_SERVER_HOSTNAME=seafile.mydomain.com # Specifies your host name if https is enabled
+      - SEAFILE_SERVER_HOSTNAME=seafile.domain.com # Specifies your host name if https is enabled
       - PUID=1020
       - PGID=1000
       - TZ=America/New_York
@@ -87,15 +80,45 @@ services:
         - traefik.enable=true
         - traefik.docker.network=traefik-public
         - traefik.constraint-label=traefik-public
-        - traefik.http.routers.seafile-http.rule=Host(`seafile.mydomain.com`)
-        - traefik.http.routers.seafile-http.entrypoints=http
-        - traefik.http.routers.seafile-http.middlewares=https-redirect
-        - traefik.http.routers.seafile-https.rule=Host(`seafile.mydomain.com`)
-        - traefik.http.routers.seafile-https.entrypoints=https
-        - traefik.http.routers.seafile-https.tls=true
-        - traefik.http.routers.seafile-https.tls.certresolver=le
+        # HTTP Router Seafile
+        - traefik.http.routers.seafile.rule=Host(`seafile.domain.com`)
+        - traefik.http.routers.seafile.entrypoints=https
+        - traefik.http.routers.seafile.tls=true
+        - traefik.http.routers.seafile-http.middlewares=sec-headers
+        - traefik.http.routers.seafile.service=seafile
         - traefik.http.services.seafile.loadbalancer.server.port=80
-
+        # HTTP Router Seafdav
+        - traefik.http.routers.seafile-dav.rule=Host(`seafile.domain.com`)&&PathPrefix(`/seafdav`)
+        - traefik.http.routers.seafile-dav.entrypoints=https
+        - traefik.http.routers.seafile-dav.tls=true
+        - traefik.http.routers.seafile-dav.service=seafile-dav
+        - traefik.http.services.seafile-dav.loadbalancer.server.port=8080
+        # HTTP Router Seafhttp
+        - traefik.http.routers.seafile-http.rule=Host(`seafile.domain.com`)&&PathPrefix(`/seafhttp`)
+        - traefik.http.routers.seafile-http.entrypoints=https
+        - traefik.http.routers.seafile-http.tls=true
+        - traefik.http.routers.seafile-http.middlewares=seafile-strip
+        - traefik.http.routers.seafile-http.service=seafile-http
+        - traefik.http.services.seafile-http.loadbalancer.server.port=8082
+        # Middlewares
+        - traefik.http.middlewares.seafile-strip.stripprefix.prefixes=/seafhttp
+        - traefik.http.middlewares.sec-headers.headers.framedeny=true
+        - traefik.http.middlewares.sec-headers.headers.sslredirect=true
+        - traefik.http.middlewares.sec-headers.headers.browserXssFilter=true
+        - traefik.http.middlewares.sec-headers.headers.contentTypeNosniff=true
+        - traefik.http.middlewares.sec-headers.headers.forceSTSHeader=true
+        - traefik.http.middlewares.sec-headers.headers.stsIncludeSubdomains=true
+        - traefik.http.middlewares.sec-headers.headers.stsPreload=true
+        - traefik.http.middlewares.sec-headers.headers.referrerPolicy=same-origin
+      # Common setup
+        - traefik.http.routers.seafile.tls.certresolver=letsencrypt
+        - traefik.http.middlewares.seafile-https-redirect.redirectscheme.scheme=https
+        - traefik.http.routers.seafile-https-redirect.entrypoints=http
+        - traefik.http.routers.seafile-https-redirect.middlewares=https-redirect
+        - traefik.http.routers.seafile-https-redirect.rule=Host(`seafile.domain.com`)
+      # Go into Seafile - Settings - Settings and set both SERVICE_URL and FILE_SERVER_ROOT to be https:// links
+      # You can also do this in the database if the UI is hosed, you may be able to get around in http with broken links enough to set the things above.
+        
 networks:
   net:
     driver: overlay
