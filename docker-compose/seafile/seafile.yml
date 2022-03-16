@@ -81,20 +81,20 @@ services:
         - traefik.docker.network=traefik-public
         - traefik.constraint-label=traefik-public
         # HTTP Router Seafile
-        - traefik.http.routers.seafile.rule=Host(`seafile.domain.com`)
+        - traefik.http.routers.seafile.rule=Host(`seafile.example.com`)&&PathPrefix(`/`)
         - traefik.http.routers.seafile.entrypoints=https
         - traefik.http.routers.seafile.tls=true
         - traefik.http.routers.seafile-http.middlewares=sec-headers
         - traefik.http.routers.seafile.service=seafile
         - traefik.http.services.seafile.loadbalancer.server.port=80
         # HTTP Router Seafdav
-        - traefik.http.routers.seafile-dav.rule=Host(`seafile.domain.com`)&&PathPrefix(`/seafdav`)
+        - traefik.http.routers.seafile-dav.rule=Host(`seafile.example.com`)&&PathPrefix(`/seafdav`)
         - traefik.http.routers.seafile-dav.entrypoints=https
         - traefik.http.routers.seafile-dav.tls=true
         - traefik.http.routers.seafile-dav.service=seafile-dav
         - traefik.http.services.seafile-dav.loadbalancer.server.port=8080
         # HTTP Router Seafhttp
-        - traefik.http.routers.seafile-http.rule=Host(`seafile.domain.com`)&&PathPrefix(`/seafhttp`)
+        - traefik.http.routers.seafile-http.rule=Host(`seafile.example.com`)&&PathPrefix(`/seafhttp`)
         - traefik.http.routers.seafile-http.entrypoints=https
         - traefik.http.routers.seafile-http.tls=true
         - traefik.http.routers.seafile-http.middlewares=seafile-strip
@@ -115,10 +115,11 @@ services:
         - traefik.http.middlewares.seafile-https-redirect.redirectscheme.scheme=https
         - traefik.http.routers.seafile-https-redirect.entrypoints=http
         - traefik.http.routers.seafile-https-redirect.middlewares=https-redirect
-        - traefik.http.routers.seafile-https-redirect.rule=Host(`seafile.domain.com`)
+        - traefik.http.routers.seafile-https-redirect.rule=Host(`seafile.example.com`)
+        - traefik.http.routers.seafile-https-redirect.service=seafile-https-redirect
       # Go into Seafile - Settings - Settings and set both SERVICE_URL and FILE_SERVER_ROOT to be https:// links
-      # You can also do this in the database if the UI is hosed, you may be able to get around in http with broken links enough to set the things above.
-        
+      # You can also do this in the database if the UI is hosed
+      
 networks:
   net:
     driver: overlay
