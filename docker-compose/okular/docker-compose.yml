@@ -1,0 +1,42 @@
+THIS IS UNTESTED UNTIL THE IMAGE GETS PUSHED
+
+
+
+
+version: '3.7' 
+services: 
+  okular: 
+    image: mindcrime30/docker-okular:0.0.1
+    environment: 
+      - PUID=1020
+      - PGID=1020
+      - TZ=America/New_York
+    networks:
+      - net
+    ports: 
+      - 5801:5800 
+    
+    deploy:
+      labels:
+        - needs.something.to.deploy=true
+        # okular is INTERNAL only
+    volumes:
+      - storage:/storage
+      - output:/output
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+    
+volumes:
+  storage:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.0.253,ro
+      device: :/mnt/pool_alpha/files/
+  output:
+    driver_opts:
+      type: nfs
+      o: addr=192.168.0.253,rw
+      device: :/mnt/pool_alpha/temp
