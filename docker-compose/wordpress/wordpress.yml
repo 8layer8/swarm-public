@@ -1,0 +1,72 @@
+---
+version: '3.7'
+services:
+  wwwmydomaincom:
+    image: wordpress:latest
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+      # make difficult passwords, and match them up with the passwords in the database section below
+      - WORDPRESS_DB_HOST=wwwmydomaincomdb
+      - WORDPRESS_DB_USER=wordpress
+      - WORDPRESS_DB_PASSWORD=978yehcohadsc
+      - WORDPRESS_DB_NAME=wordpress
+      #- WORDPRESS_TABLE_PREFIX=...
+      #- WORDPRESS_AUTH_KEY=...,
+      #- WORDPRESS_SECURE_AUTH_KEY=...,
+      #- WORDPRESS_LOGGED_IN_KEY=...,
+      #- WORDPRESS_NONCE_KEY=...,
+      #- WORDPRESS_AUTH_SALT=...,
+      #- WORDPRESS_SECURE_AUTH_SALT=...,
+      #- WORDPRESS_LOGGED_IN_SALT=...,
+      #- WORDPRESS_NONCE_SALT=...
+      #- WORDPRESS_DEBUG=0
+      #- WORDPRESS_CONFIG_EXTRA=...
+    volumes:
+      - /mnt/pool_alpha/vm_storage/public/wordpress/www:/var/www/html
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.wwwmydomaincom-http.rule=Host(`www.mydomain.com`)
+        - traefik.http.routers.wwwmydomaincom-http.entrypoints=http
+        - traefik.http.routers.wwwmydomaincom-http.middlewares=https-redirect
+        - traefik.http.routers.wwwmydomaincom-https.rule=Host(`www.mydomain.com`)
+        - traefik.http.routers.wwwmydomaincom-https.entrypoints=https
+        - traefik.http.routers.wwwmydomaincom-https.tls=true
+        - traefik.http.routers.wwwmydomaincom-https.tls.certresolver=le
+        - traefik.http.services.wwwmydomaincom.loadbalancer.server.port=80
+
+  wwwmydomaincomdb:
+    # We use a mariadb image which supports both amd64 & arm64 architecture
+    image: mariadb:10.6.4-focal
+    # If you really want to use MySQL, uncomment the following line
+    #image: mysql:8.0.27
+    command: '--default-authentication-plugin=mysql_native_password'
+    environment:
+      # These passwords have to match the ones up in the db section
+      - MYSQL_ROOT_PASSWORD=iuwghrc74gciu3gh4c
+      - MYSQL_DATABASE=wordpress
+      - MYSQL_USER=wordpress
+      - MYSQL_PASSWORD=978yehcohadsc
+    volumes:
+      - /mnt/pool_alpha/vm_storage/public/wordpress/db:/var/lib/mysql  # Requested, specifies the path to MySQL data persistent store.
+    networks:
+      - net
+    deploy:
+      labels:
+        - traefik.enable=false
+        - traefik.docker.network=net
+        - traefik.constraint-label=net
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  traefik-public:
+    external: true
