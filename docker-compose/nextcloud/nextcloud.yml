@@ -1,0 +1,81 @@
+---
+version: '3.7'
+
+services:
+  db:
+    image: mariadb:latest
+    container_name: nextcloud_db
+    volumes:
+      - /mnt/pool_alpha/vm_storage/nextcloud/db:/var/lib/mysql
+    networks:
+      - net
+      - traefik-public
+    restart: always
+    environment:
+      TZ: America/New_York
+      MYSQL_ROOT_PASSWORD: 43ewsde43we
+      MYSQL_DATABASE: db
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: 776ytgy6t5re
+
+  redis:
+    image: redis:latest
+    container_name: nextcloud_redis
+    restart: always
+    networks:
+      - net
+      - traefik-public
+    volumes:
+      - /mnt/pool_alpha/vm_storage/nextcloud/redis:/var/lib/redis
+
+  nextcloud:
+    depends_on:
+      - redis
+      - db
+    image: nextcloud:stable
+    container_name: nextcloud
+    volumes:
+      - /mnt/pool_alpha/vm_storage/nextcloud/data:/var/www/html
+    networks:
+      - net
+      - traefik-public
+    restart: always
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.nextcloud-http.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.nextcloud-http.entrypoints=http
+        - traefik.http.routers.nextcloud-http.middlewares=https-redirect
+        - traefik.http.routers.nextcloud-https.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.nextcloud-https.entrypoints=https
+        - traefik.http.routers.nextcloud-https.tls=true
+        - traefik.http.routers.nextcloud-https.tls.certresolver=le
+        - traefik.http.services.nextcloud.loadbalancer.server.port=80
+        # - traefik.http.routers.nextcloud.middlewares=nextcloud,nextcloud_redirect
+        - traefik.http.middlewares.nextcloud.headers.customFrameOptionsValue=ALLOW-FROM https://mydomain.com
+        - traefik.http.middlewares.nextcloud.headers.contentSecurityPolicy=frame-ancestors 'self' mydomain.com *.mydomain.com
+        - traefik.http.middlewares.nextcloud.headers.stsSeconds=155520011
+        - traefik.http.middlewares.nextcloud.headers.stsIncludeSubdomains=true
+        - traefik.http.middlewares.nextcloud.headers.stsPreload=true
+        - traefik.http.middlewares.nextcloud.headers.customresponseheaders.X-Frame-Options=SAMEORIGIN
+        - traefik.http.middlewares.nextcloud_redirect.redirectregex.permanent=true
+        - traefik.http.middlewares.nextcloud_redirect.redirectregex.regex=https://(.*)/.well-known/(card|cal)dav
+        - traefik.http.middlewares.nextcloud_redirect.redirectregex.replacement=https://$${1}/remote.php/dav/
+
+    environment:
+      REDIS_HOST: redis
+      MYSQL_HOST: db:3306
+      MYSQL_DATABASE: db
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: 776ytgy6t5re
+      # You have to match this up with the ip of your traefik container
+      TRUSTED_PROXIES: 172.19.0.3
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  traefik-public:
+    external: true
