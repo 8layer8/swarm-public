@@ -1,0 +1,25 @@
+---
+version: '2.7'
+services:
+  healthchecks:
+    image: galexrt/healthchecks:latest
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+      - DB_NAME=/data/hc.sqlite
+      - SECRET_KEY=abcdefghijklmnop
+      - PING_EMAIL_DOMAIN=example.com
+      - SITE_ROOT=http://example.com
+      - EMAIL_HOST=smtp.example.com
+      - EMAIL_PORT=25
+      - EMAIL_USE_TLS=True
+      - EMAIL_HOST_USER=healthcheck@example.com
+      - EMAIL_HOST_PASSWORD=MyCrazyPassword
+      - ALLOWED_HOSTS=localhost,*
+      - CONTAINER_PRUNE_INTERVAL=600
+    ports:
+      - 8013:8000
+    volumes:
+      - /mnt/vm_storage/healthchecks/data:/data
+      
