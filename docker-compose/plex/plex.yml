@@ -1,0 +1,140 @@
+version: '3.7'
+services:
+  plex:
+    image: linuxserver/plex
+    environment:
+      - PGID=1000
+      - PLEX_CLAIM=claim-GETYOUROWNCODE
+      - PUID=1020
+      - TZ=America/New_York
+      - VERSION=latest
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/pool_bravo/plex/var/lib/plexmediaserver:/config:rw
+      - /mnt/pool_gamma/music:/storage:ro
+      - /mnt/pool_echo/video:/video_e
+      - /mnt/pool_foxtrot/Audiobooks:/Audiobooks
+      - /mnt/pool_foxtrot/tv:/tv_f
+      - /mnt/pool_foxtrot/video:/video_f
+      - /mnt/pool_gamma/music:/music
+      - /mnt/pool_gamma/video:/video_g
+      - /mnt/pool_delta/tv:/tv_d
+      - /mnt/pool_indigo/video:/video_i
+      - /mnt/pool_indigo/tv:/tv_i
+    ports:
+      - 32400:32400
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+      - traefik.http.routers.plex-http.rule=Host(`${DOMAIN2?Variable not set}`)
+      - traefik.http.routers.plex-http.entrypoints=http
+      - traefik.http.routers.plex-http.middlewares=https-redirect
+      - traefik.http.routers.plex-https.rule=Host(`${DOMAIN2?Variable not set}`)
+      - traefik.http.routers.plex-https.entrypoints=https
+      - traefik.http.routers.plex-https.tls=true
+      - traefik.http.routers.plex-https.tls.certresolver=le
+      - traefik.http.services.plex.loadbalancer.server.port=32400
+
+  aplexa:
+    image: linuxserver/plex
+    environment:
+      - PGID=1000
+      - PLEX_CLAIM=claim-GETYOUROWNCODE
+      - PUID=1020
+      - TZ=America/New_York
+      - VERSION=latest
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/pool_alpha/vm_storage/aplexa/config:/config:rw
+      - /mnt/pool_gamma/music:/storage:ro
+    ports:
+      - 32401:32400
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+      - traefik.http.routers.aplexa-http.rule=Host(`${DOMAIN3?Variable not set}`)
+      - traefik.http.routers.aplexa-http.entrypoints=http
+      - traefik.http.routers.aplexa-http.middlewares=https-redirect
+      - traefik.http.routers.aplexa-https.rule=Host(`${DOMAIN3?Variable not set}`)
+      - traefik.http.routers.aplexa-https.entrypoints=https
+      - traefik.http.routers.aplexa-https.tls=true
+      - traefik.http.routers.aplexa-https.tls.certresolver=le
+      - traefik.http.services.aplexa.loadbalancer.server.port=32400
+
+  plex_pmm:
+    image: meisnate12/plex-meta-manager
+    environment:
+      - PUID=1020
+      - PGID=1000
+      - TZ=America/New_York
+    networks:
+      - net
+    volumes:
+      - /mnt/pool_alpha/vm_storage/plex-meta-manager/config:/config:rw
+    deploy:
+            #      labels:
+            #- traefik.enable=true
+            #- traefik.docker.network=traefik-public
+            #- traefik.constraint-label=traefik-public
+            #- traefik.http.routers.overseer-http.rule=Host(`${DOMAIN?Variable not set}`)
+            #- traefik.http.routers.overseer-http.entrypoints=http
+            #- traefik.http.routers.overseer-http.middlewares=https-redirect
+            #- traefik.http.routers.overseer-https.rule=Host(`${DOMAIN?Variable not set}`)
+            #- traefik.http.routers.overseer-https.entrypoints=https
+            #- traefik.http.routers.overseer-https.tls=true
+            #- traefik.http.routers.overseer-https.tls.certresolver=le
+      labels:
+        - traefik.enable=false
+
+  overseerr:
+    image: sctx/overseerr:latest
+    environment:
+      - LOG_LEVEL=info
+      - TZ=America/New_York
+        #    ports:
+        #      - 5055:5055
+    volumes:
+      - /mnt/pool_alpha/vm_storage/overseer/config:/app/config
+    networks:
+      - net
+      - traefik-public
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.overseer-http.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.overseer-http.entrypoints=http
+        - traefik.http.routers.overseer-http.middlewares=https-redirect
+        - traefik.http.routers.overseer-https.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.overseer-https.entrypoints=https
+        - traefik.http.routers.overseer-https.tls=true
+        - traefik.http.routers.overseer-https.tls.certresolver=le
+        - traefik.http.services.overseer.loadbalancer.server.port=5055
+
+  disquetv:
+    image: vexorian/dizquetv:latest
+    environment:
+      - TZ=America/New_York
+    volumes:
+      - /mnt/pool_alpha/vm_storage/disquetv/config:/home/node/app/.dizquetv
+    ports:
+      - 8000:8000
+
+  gaps:
+    image: housewrecker/gaps:latest
+    environment:
+      - TZ=America/New_York
+    volumes:
+      - /mnt/pool_alpha/vm_storage/disquetv/config:/home/node/app/.dizquetv
+    ports:
+      - 8484:8484
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  traefik-public:
+    external: true
