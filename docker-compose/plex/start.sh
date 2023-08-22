@@ -3,7 +3,7 @@
 export DOMAIN=overseer.domain.com
 export DOMAIN2=plex.domain.com
 export DOMAIN3=aplexa.domain.com
-export DOMAIN4=gaps.domain.com
+# gaps just uses a local port export DOMAIN4=gaps.domain.com
 
 #Make sure that your DNS records point that domain (e.g. cura.sys.example.com) to one of the IPs of the Docker Swarm mode cluster.
 
